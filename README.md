@@ -1,10 +1,9 @@
 # 🥨 BROWNY NFT
-![타이틀이미지](images/title.png)
+![타이틀이미지](docs/images/title.png)
 
 ## 🧇 프로젝트 진행 기간
 2022.06.02 ~ 예정 없음
 경일게임 아카데미 블록체인4기 기업 협약 프로젝트 - BROWNY NFT
-🍞🥐🥖🫓🥨🥯🥞🧇
 </br>
 
 ## 🥯 BROWNY 주요 기술
