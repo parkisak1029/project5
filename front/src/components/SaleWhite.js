@@ -4,7 +4,6 @@ import styled from "styled-components";
 import { useDispatch, useSelector } from 'react-redux';
 import {Container,Row , Col , Button} from 'react-bootstrap'
 import ProgressBar from 'react-bootstrap/ProgressBar'
-import contractAbi from "../abi.json"
 import Browny from '../img/browny9.png'
 
 const StyledMain = styled.div`
@@ -60,9 +59,11 @@ const StyledBar = styled.div`
 `;
 
 const WhiteSale = () => {
-    const { myContract } = useSelector(state => state.nft);
+    const dispatch = useDispatch();
+    const { brownieContract, myAddress } = useSelector(state => state.nft);
 
     const [count, setCount] = useState(1)
+    const [isWhite, setIsWhite] = useState(false)
 
     const countAdd = () => {
         // counting 
@@ -75,29 +76,54 @@ const WhiteSale = () => {
     }
 
     const whiteMint = async () => {
-        // await window.caver.klay.sendTransaction({
-        //   type: 'VALUE_TRANSFER',
-        //   from: window.klaytn.selectedAddress,
-        //   to: '0x0000000000000000000000000000000000000000',
-        //   value: window.caver.utils.toPeb('1', 'KLAY'),
-        //   gas: 8000000
-        // })
-    
-        await myContract.methods.whitelistMint(window.klaytn.selectedAddress,count).send({from:window.klaytn.selectedAddress, gas: 300000 ,value: window.caver.utils.toPeb(count, 'KLAY')})
-        // alert("송금 성공")
-
+        try{
+            const conData = await brownieContract.methods.whitelistMint(count).encodeABI()
+            const result = await window.caver.klay.sendTransaction({
+                type: 'SMART_CONTRACT_EXECUTION',
+                from:myAddress, 
+                to:'0x35def1D38a11fE4231Fb64993aFbb9A1e0342B01',
+                data:conData,
+                gas: 3000000
+            })
+            if(result.status){
+                dispatch({type: "WALLET_REFRESH"})
+                alert("해당 지갑 주소로 민팅되었습니다!");
+                // navigate('/');
+            }
+            else alert("transaction fail")
+        }
+        catch(e){
+            // alert("카이카스 서명 거부됨")
+        }
     }
+
+    const checkWhitelist = async () => {
+        if(brownieContract){
+            try{
+                const isWhite =  await brownieContract.methods.isWhitelisted(myAddress).call()
+                setIsWhite(isWhite)
+            }
+            catch(e){
+                 throw e
+                }
+        }
+    }
+
+    useEffect(()=>{
+        checkWhitelist()
+    },[isWhite,myAddress])
+    
 
     return (
         <div className='whitelist'>
             <StyledMain >
                 <h2 className="mint-title">WhiteSale</h2>
+                {isWhite 
+                ?
+                <>
                 <StyledDiv >
                     <img src={Browny} style={{ width: 220, height: 220 }} />
                 </StyledDiv>
-                <StyledBar >
-                    <ProgressBar animated now={65} />
-                </StyledBar>
                 <div className="mint-count-box">
                     <StyledButton onClick={() => countMinus()}>  - </StyledButton>
                     <span className="mint-count">Mint : {count}</span>
@@ -107,7 +133,7 @@ const WhiteSale = () => {
                 <Container className="mint-info-box">
                     <Row>
                         <Col>Price</Col>
-                        <Col>60 KLAY</Col>
+                        <Col>1 BTK</Col>
                     </Row>
                     <Row>
                         <Col>Per transaction</Col>
@@ -119,12 +145,20 @@ const WhiteSale = () => {
                     </Row>
                 </Container>
                 <br />
-                {/* <Button className="mint-wal-connect-btn" variant="primary">지갑 연결하기 </Button>{' '} */}
                 <Button
                     className="mint-wal-connect-btn"
                     variant="primary"
                     onClick={whiteMint}
-                >노진형 nft받기 </Button>{' '}
+                >Mint </Button>{' '}
+                </>
+                :
+                <>
+                <Container className="not-whitelist">
+                    <div>화이트리스트가 아닙니다</div>
+                </Container>
+                </>
+                }
+                
 
             </StyledMain>
         </div>

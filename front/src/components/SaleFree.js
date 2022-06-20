@@ -4,7 +4,6 @@ import styled from "styled-components";
 import { Container, Row, Col, Button } from 'react-bootstrap'
 import ProgressBar from 'react-bootstrap/ProgressBar'
 import { useDispatch, useSelector } from 'react-redux';
-import contractAbi from "../abi.json";
 import { useNavigate } from 'react-router-dom';
 import Browny from '../img/browny8.png';
 
@@ -62,31 +61,33 @@ const StyledBar = styled.div`
 const FreeSale = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { myContract } = useSelector(state => state.nft);
+    const { brownieContract, myAddress } = useSelector(state => state.nft);
 
-    const onClick = async () => {
-        const accounts = await window.klaytn.enable()
-        console.log("account", accounts)
-        const balance = await window.caver.klay.getBalance(accounts[0])
-        console.log("balance" , balance)
-        dispatch({type:"WHITELIST_KEY" ,payload: accounts })
-      }
-      const onClick2 = async () => {
-        console.log(myContract);
-        await myContract.methods.batchMint(window.klaytn.selectedAddress,count).send({from:window.klaytn.selectedAddress, gas: 300000 ,value: window.caver.utils.toPeb(2*count, 'KLAY')}) // 가격이 2클레이
-        // await window.caver.klay.sendTransaction({
-        //   type: 'VALUE_TRANSFER',
-        //   from: window.klaytn.selectedAddress,
-        //   to: '0x0000000000000000000000000000000000000000',
-        //   value: window.caver.utils.toPeb('1', 'KLAY'),
-        //   gas: 8000000
-        // })
-        // alert("송금 성공")
-        alert("해당 지갑 주소로 민팅되었습니다!");
-        navigate('/');
-    }
-    const onClick3 = async () => {
-        console.log(await myContract.methods.isWhitelisted("0xAc45689e82aE9F93ED325b9254fe42BB77bA7849").call())
+    
+    const preMint = async () => {
+        if(!myAddress){
+            return alert("지갑을 먼저 연결해주세요")
+        }
+        try{
+            const conData = await brownieContract.methods.batchMint(count).encodeABI()
+            const result = await window.caver.klay.sendTransaction({
+                type: 'SMART_CONTRACT_EXECUTION',
+                from:myAddress, 
+                to:'0x35def1D38a11fE4231Fb64993aFbb9A1e0342B01',
+                data:conData,
+                gas: 3000000
+            })
+            if(result.status){
+                dispatch({type: "WALLET_REFRESH"})
+                alert("해당 지갑 주소로 민팅되었습니다!");
+                // navigate('/');
+            }
+            else alert("transaction fail")
+        }
+        catch(e){
+            alert("카이카스 서명 거부됨")
+        }
+        
     }
 
     // const dispatch = useDispatch(state => state.nft)
@@ -116,9 +117,6 @@ const FreeSale = () => {
                         <img src={Browny} style={{ width: 187, height: 220 }} />
                     </StyledDiv>
                 </div>
-                <StyledBar >
-                    <ProgressBar animated now={65} />
-                </StyledBar>
                 <div className='mint-count-box'>
                     <StyledButton onClick={() => countMinus()}>  - </StyledButton>
                     <span>Mint : {count}</span>
@@ -127,7 +125,7 @@ const FreeSale = () => {
                 <Container className="mint-info-box">
                     <Row>
                         <Col>Price</Col>
-                        <Col>60 KLAY</Col>
+                        <Col>2 BTK</Col>
                     </Row>
                     <Row>
                         <Col>Per transaction</Col>
@@ -139,13 +137,10 @@ const FreeSale = () => {
                     </Row>
                 </Container>
                 <br />
-                {/* <Button className="mint-wal-connect-btn" variant="success" onClick={onClick}>지갑 연결하기</Button>{' '} */}
-                <Button className="mint-wal-connect-btn" variant="success" onClick={onClick2}>노진형 nft 받기</Button>{' '}
-                <Button className="mint-wal-connect-btn" variant="success" onClick={onClick3}>화이트리스트 테스트</Button>{' '}
+                <Button className="mint-wal-connect-btn" variant="success" onClick={preMint}>Mint</Button>{' '}
 
             </StyledMain>
         </div>
     )
 }
-
 export default FreeSale
