@@ -1,7 +1,5 @@
 import React, { useState, useRef } from 'react';
 import styled from "styled-components";
-import Logo from '../img/logo.png';
-import axios from 'axios';
 import Exit from '../img/exit.png';
 
 const StyledBody = styled.div`
@@ -9,10 +7,8 @@ const StyledBody = styled.div`
     height: 100%;
     display: flex;
     justify-content: center;
-    margin-top: 40px;
-    
+    margin-top: 40px;    
 `
-
 const StyledOuter = styled.div`
     width: 350px;
     height: 420px;
@@ -21,7 +17,6 @@ const StyledOuter = styled.div`
     justify-content: center;
     /* opacity: 94%; */
 `
-
 const StyledWhiteListDiv = styled.div`
     width: 280px;
     height: 400px;
@@ -30,7 +25,6 @@ const StyledWhiteListDiv = styled.div`
     border: 2px solid black;
     border-radius: 5px;
 `
-
 const StyledWhiteListImg = styled.img`
     width: 200px;
     height: 200px;
@@ -45,7 +39,7 @@ const StyledModalExit = styled.img`
 
 const WhiteList = () => {
     const uploadImg = useRef(0);
-    const [image, setImage] = useState(Logo);
+    // const [image, setImage] = useState(Logo);
 
     const onUploadImg = async (e) => {
         const formData = new FormData();
@@ -69,7 +63,7 @@ const WhiteList = () => {
                 <StyledModalExit src={Exit} alt="modal exit" />
             </div>
             <div>
-                <StyledWhiteListImg src={image} alt="upload img"/>
+                {/* <StyledWhiteListImg src={image} alt="upload img"/> */}
                 <input ref={uploadImg} type='file'
                     className='upload-img'
                     accept='image/*' name='file'

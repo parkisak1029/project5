@@ -1,48 +1,57 @@
 import React from 'react'
-import D3 from '../components/D3'
-import EarthVote from '../components/EarthVote'
-import QuitVote from '../components/QuitVote'
-import SlideShow from '../components/SlideShow'
+// import D3 from '../components/home/D3'
+// import EarthVote from '../components/EarthVote'
+// import QuitVote from '../components/QuitVote'
+// import SlideShow from '../components/home/SlideShow'
 import styled from 'styled-components'
-import Viliage from 'components/Viliage'
-import Team from 'components/Team'
+// import Viliage from 'components/Viliage'
+// import Team from 'components/Team'
 import { viliage2 } from '../img'
+// import WhiteListMember from 'components/WhiteListMember'
+// import { Animation } from 'components/Animation'
+// import AlertModal from 'components/AlertModal'
+import CommunityTable from 'components/vote/CommunityTable'
+import MainHeader from 'components/MainHeader'
+import VoteDescription from 'components/vote/VoteDescription'
+import CommunityPostButton from 'components/vote/CommunityPostButton'
+import CommunityTopic from 'components/vote/CommunityTopic'
+import CommunityVoteTable from 'components/vote/CommunityVoteTable'
+import VoteDetail from 'components/vote/VoteDetail'
+import Community from './Community'
+import ClockTest from 'components/ClockTest'
+import Slider from 'components/Slider'
+import EndVote from 'components/EndVote'
+// import Test from 'components/Test'
 
 
 
-const HomeBackImgPosition = styled.div`
-    /* width: 100%;
-    height: 500px;
-    background-image: url(${viliage2});
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center; 
-    z-index: -2; */
-`
-const TestMain = styled.div`
-  z-index:4;
 
-  .test-aa {
-  }
-`
-
-const DDiv = styled.div`
-  width: 100%;
-  height: 400px;
-  background-color: black;
-  /* z-index: 4px; */
-  opacity: 0.5;
-`
 const Testpage = () => {
 
   return (
     <div>
+      <EndVote />
+        {/* <Test /> */}
         {/* <EarthVote /> */}
         {/* <QuitVote /> */}
         {/* <SlideShow /> */}
         {/* <Viliage /> */}
-        <Team />
+        {/* <Team /> */}
+        {/* <WhiteListMember /> */}
+        {/* <Animation /> */}
+        {/* <AlertModal /> */}
+        {/* <VoteDetail /> */}
+        {/* <MainHeader />
+        <CommunityTopic />
+        <VoteDescription />
+        <CommunityPostButton />
+        <CommunityTable />
+        <CommunityVoteTable /> */}
+        {/* <VoteDetail /> */}
+        {/* <Community /> */}
+        {/* <ClockTest /> */}
+        {/* <Slider /> */}
+        {/* <SlideTest /> */}
     </div>
   )
 }

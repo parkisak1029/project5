@@ -1,55 +1,20 @@
 let initialState = {
-    nft: {},
     myNFTpage: 1,
     myStakedpage: 1,
-    countAnimal: 0,
-    countKid: 0,
-    countMinority: 0,
-    countTotal: 0,
-    modalState: false,
     nftList: "",
     myNFTs: [],
     myStakedNFTs: [],
     reward: 0,
     loading: false,
-    posts: [{
-        id: 1
-        , title: "test1"
-    }, {
-        id: 2
-        , title: "test2"
-    }, {
-        id: 3
-        , title: "test3"
-    }],
-    // address, walletRefresh, isDeployer update
+    voteStatus: "0",
+    // userInfo
     myAddress: "",
-    walletRefresh: 1,
-    isDeployer: false
 }
 
 function nftReducer(state = initialState, action) {
     let { type, payload } = action
 
     switch (type) {
-        case "MODAL_CLICK":
-            return {
-                ...state,
-                modalState: !state.modalState,
-            };
-
-        case "MODAL_CLOSE":
-            return {
-                ...state,
-                modalState: false,
-            };
-
-        case "VOTE_INCREMENT":
-            return {
-                ...state,
-                [Object.keys(payload)[0]]: Object.values(payload)[0],
-                countTotal: state.countTotal + 1,
-            };
 
         case 'GET_REWARD':
             return {
@@ -74,6 +39,7 @@ function nftReducer(state = initialState, action) {
             // console.log(payload)
             // console.log(Object.keys(payload)[0])
             // console.log(Object.values(payload)[0])
+            // payload = {myNFTs: [{id: 1, image: '1adasd', checked: true}]}
             return {
                 ...state,
                 [Object.keys(payload)[0]]: Object.values(payload)[0],
@@ -86,10 +52,10 @@ function nftReducer(state = initialState, action) {
                 myStakedNFTs: payload.myStakedNFTs,
             }
 
-        case 'NFTCARD_MYNFTS_CLICK' :
+        case 'NFTCARD_CLICK' :
             return {
                 ...state,
-                myNFTs: payload,
+                [Object.keys(payload)[0]]: Object.values(payload)[0],
             }
 
         case 'NFTCARD_STAKE_CLICK' :
@@ -98,11 +64,11 @@ function nftReducer(state = initialState, action) {
                 myStakedNFTs: payload,
             }
 
-        case 'NFTCARD_STAKE' :
+        case 'NFTCARD_TRANSACT' :
             return {
                 ...state,
                 myNFTs: payload.myNFTs,
-                myStakedNFTs: state.myStakedNFTs.concat(payload.myStakedNFTs),
+                myStakedNFTs: payload.myStakedNFTs,
             }
 
         case 'NFTCARD_UNSTAKE' :
@@ -144,18 +110,14 @@ function nftReducer(state = initialState, action) {
                 ...state,
                 myAddress: payload,
             }
-        
-        case "WALLET_REFRESH":
+
+
+        case "SET_VOTE_STATUS" :
             return {
                 ...state,
-                walletRefresh: !state.walletRefresh
+                voteStatus : payload
             }
-        
-        case "CHECK_ISDEPLOYER":
-            return {
-                ...state,
-                isDeployer: payload
-            }
+
 
         default:
             return { ...state }

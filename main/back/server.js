@@ -7,8 +7,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors())
 
-app.use(router)
+app.use("/api",router)
 
 app.listen(4000, () => {
     console.log('server start 4000')
 })
+

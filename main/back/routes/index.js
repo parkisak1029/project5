@@ -1,10 +1,16 @@
-const express = require('express')
+const express = require('express');
 const router = express.Router();
-const mintRouter = require('./mintRouter')
-const imageRouter = require('./imageRouter')
+const whiteRouter = require('./whiteRouter');
+const imageRouter = require('./imageRouter');
+const userRouter = require('./userRouter');
+const communityRouter = require('./communityRouter');
 
-router.use('/white', mintRouter)
+router.use('/white', whiteRouter);
 
-router.use('/image', imageRouter)
+router.use('/image', imageRouter);
 
-module.exports = router
+router.use('/user', userRouter);
+
+router.use('/community', communityRouter);
+
+module.exports = router;

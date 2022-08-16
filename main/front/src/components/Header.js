@@ -1,16 +1,46 @@
-import React, { useState, useEffect } from 'react'
-import {Nav, Button, Navbar, Container } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import Logo from '../img/brownyLogo.png';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCopy } from '@fortawesome/free-solid-svg-icons'
+import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import {btkInstance, brownyContract} from "configs";
+import styled from 'styled-components';
+import { Nav, Navbar, Container } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { enableKaikas, getTokenBalance, useAlert } from 'api';
+import { nftAction } from 'redux/actions/nftAction';
+import AlertModal from './AlertModal';
+import ChangeNicknameModal from './ChangeNicknameModal';
+import UserBar from './UserBar';
+import Logo from '../img/brownyLogo.png';
+import { background13 } from '../img/background';
+import { closeModal } from './testDispatch';
 
-import { background10 ,background13} from '../img/background';
-import D3 from './D3';
+const WalletButton = styled.button`
+    width: 150px;
+    background: #198754;
+    border: none;
+    color: white;
+    padding: 3px;
+    border-radius: 20px;
+    transform: translate(-20px, -5px);
 
+    @media (max-width: 992px) {
+        position: absolute;
+        top: -40px;
+        left: 41%;
+    };
+
+    @media (max-width: 865px) {
+        left: 40%;
+    };
+
+    @media (max-width: 720px) {
+        left: 39%;
+    };
+
+    @media (max-width: 620px) {
+        left: 36%;
+    };
+
+`
 const LogoContainer = styled.div`
     background-image: url(${Logo});
     width: 130px;
@@ -21,165 +51,144 @@ const LogoContainer = styled.div`
     margin-left: 1px;
 `
 
-const PFPContainer = styled.div`
-  margin-left: 10px;
-  font-size: 20px;
-  padding: 2px 10px;
-  border: 3px solid;
-  border-radius: 20px;
-  background-color: #198754;
-  border-color: #198754;
-  letter-spacing: -1px;
-  padding: 1px 20px;
-  cursor: pointer;
-  color: white;
-  /* position: fixed; */
-  &:hover{  
-    transform: scale(1.1);
-  }
-`
-const StyledInfo = styled.div`
-    background-color: white;
-    width: 105%;
-    margin-top: 7px;
-    position: relative;
-    border: 1px solid black;
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-weight: bold;
-    line-height: 30px;
-    /* margin-right: 20px; */
-    /* background: white; */
-    text-align: center;
-    z-index: 3;
-    opacity: 90%;
-`
-
-
 const Header = () => {
     const dispatch = useDispatch();
-    const { modalState, myAddress, walletRefresh, isDeployer } = useSelector(state => state.nft);
+    const { myAddress } = useSelector(state => state.nft);
+    const { modalState, walletRefresh, isDeployer, isWhite, klayBalance, btkBalance, nickname } = useSelector(state => state.main)
 
-    const [address, setAddress] = useState(null);
-    const [balance, setBalance] = useState(0);
-    const [btkBalance, setBtkBalance] = useState(0);
+    const customAlert = useAlert();
+    const changeNickname = useAlert();
 
-    const weiToFixed = (wei) => {
-        const toKlay = window.caver.utils.convertFromPeb(wei);
-        const fixed = parseFloat(toKlay).toFixed(2);
-        return fixed;
+    const setToken = (address) => {
+        dispatch(nftAction.setToken(address))
     }
 
-    const setTokenBalance = async (address) => {
-        const weiBalance = await window.caver.klay.getBalance(address)
-        const fixedBalance = weiToFixed(weiBalance)
-        console.log(fixedBalance)
-        const weibtkBalance = await btkInstance.balanceOf(address) //BigNumber 객체
-        const fixedbtkBalance = weiToFixed(weibtkBalance)
-
-        setBalance(fixedBalance)
-        setBtkBalance(fixedbtkBalance);
-    }
-
-    const setUserInfo = async () => {
-        if(myAddress){
-            setAddress(myAddress);
-            await setTokenBalance(myAddress)
-            const contractOwner = await brownyContract.methods.owner().call()
-            const isDeployer = window.caver.utils.toChecksumAddress(myAddress) === contractOwner
-            dispatch({type: 'CHECK_ISDEPLOYER', payload: isDeployer})
+    const setNickname = async (address) => {
+        try {
+            const result = await axios.post("/api/user/view", { publicKey: address })
+            const nickname = result.data;
+            dispatch({ type: "SET_NICKNAME", payload: nickname })
         }
-        else dispatch({type: 'ADDRESS_CHANGE_SUCCESS', payload: window.klaytn.selectedAddress});
+        catch (e) {
+            console.log(e);
+        }
     }
 
-    const enableKikas = () => {
-        window.klaytn.enable()
-        dispatch({type: 'ADDRESS_CHANGE_SUCCESS', payload: window.klaytn.selectedAddress});
+    const checkWhitelist = (address) => {
+        dispatch(nftAction.checkWhitelist(address));
     }
 
-    const copyAddress = () => {
-        navigator.clipboard.writeText(address)
+    const setUserInfo = async (address) => {
+        if (address) {
+            setToken(address)
+            setNickname(address)
+        }
+        dispatch(nftAction.setUserInfo(address));
+    }
+
+    const setVoteStatus = () => {
+        dispatch(nftAction.setVoteStatus())
+    }
+
+    const clickEnableKaikas = () => {
+        enableKaikas(customAlert);
     }
 
     const showInfo = () => {
-        dispatch({type: "MODAL_CLICK"})
+        dispatch({ type: "MODAL_CLICK" })
     }
 
-    const closeModal = () => {
-        dispatch({type: "MODAL_CLOSE"})
+    const reset = () => {
+        closeModal();
+        resetCollection();
+    }
+
+    const resetCollection = () => {
+        dispatch({ type: 'RESET_COLLECTION' })
     }
 
     useEffect(() => {
-        setUserInfo();
-    }, [myAddress,walletRefresh])
+        setUserInfo(myAddress);
+    }, [myAddress, walletRefresh])
 
-    useEffect(()=>{
-        window.klaytn.on('accountsChanged', async function(accounts) {
-            console.log(accounts[0])
-            sessionStorage.setItem('id', accounts[0]);
-            dispatch({type: 'ADDRESS_CHANGE_SUCCESS', payload: accounts[0]});
-            setAddress(accounts[0]);
-            await setTokenBalance(accounts[0])
-        })
-        window.klaytn.on('networkChanged', async function(network) {
-            console.log(network)
-        })
-    },[])
+    useEffect(() => {
+        checkWhitelist(myAddress);
+    }, [myAddress])
+
+    useEffect(() => {
+        if (window.klaytn) {
+            window.klaytn.on('accountsChanged', async function (accounts) {
+                // 카이카스 계정 정보 리덕스에 저장하는 부분
+                dispatch({ type: 'ADDRESS_CHANGE_SUCCESS', payload: accounts[0] });
+                setToken(accounts[0])
+                await axios.post("/api/user/add", { publicKey: accounts[0] })
+            })
+            window.klaytn.on('networkChanged', async function (network) {
+                console.log(network)
+            })
+        }
+
+        setVoteStatus();
+    }, [])
+
+    const paths = ['/staking', '/collection', '/community'];
+    const texts = ['Staking', 'Collection', 'Community'];
+
+    let pages = paths.map((path, index) => {
+        return {
+            path: path,
+            text: texts[index],
+        }
+    })
 
     return (
-        <Navbar className="nav" expand="lg">
-            <img src={background13} className="backG-img-left" />
-            <img src={background13} className="backG-img-right" />
-            {/* <D3/> */}
-            <Container fluid>
-                <Navbar.Brand>
-                    <Link to="/"><LogoContainer /></Link>
-                </Navbar.Brand>
-                <Navbar.Toggle aria-controls="navbarScroll" />
-                <Navbar.Collapse id="navbarScroll">
-                <Nav
-                    className="me-auto my-2 my-lg-0"
-                    style={{ maxHeight: '100px' }}
-                    navbarScroll
-                >
-                    <Link onClick={closeModal} className='nav-item' to="/">Home</Link>
-                    <Link onClick={closeModal} className='nav-item' to="/mint">Mint</Link>
-                    {/* <Link className='nav-item' to="/whitelist">Whitelist</Link> */}
-                    <Link onClick={closeModal} className='nav-item' to="/test">testpage</Link>
-                    <Link onClick={closeModal} className='nav-item' to="/swap">swap</Link>
-                    <Link onClick={closeModal} className='nav-item' to="/nftlist">nftlist</Link>
-                    {isDeployer ? <Link onClick={closeModal} className='nav-item' to="/admin">admin</Link> : null}
-                </Nav>
-                {
-                address != null
-                ? 
-                <div className="info-box">  
-                    <PFPContainer
-                        onClick={showInfo}
-                    >
-                    {address.toString().slice(0,7)+'...'+address.toString().slice(-7)}
-                    </PFPContainer>
-                    {modalState && 
-                        <StyledInfo>
-                        WHITELIST<br/>
-                        Copy Address
-                        <FontAwesomeIcon 
-                            className='copy-icon'
-                            icon={faCopy} 
-                            onClick={copyAddress}    
-                        />
-                        <br />
-                        {balance + " KLAYS"}
-                        <br />
-                        {btkBalance + " BTK"}
-                        </StyledInfo>
-                    }
-                </div>
-                : <><Button className="mint-wal-connect-btn" variant="success" onClick={enableKikas}>지갑 연결하기</Button>{' '}</>
-                }
-                </Navbar.Collapse>
-            </Container>
-        </Navbar>
+        <>
+            <AlertModal {...customAlert} />
+            <ChangeNicknameModal {...changeNickname} setNickname={setNickname} />
+            <Navbar className="nav" expand="lg">
+                <img src={background13} className="backG-img-left" />
+                <img src={background13} className="backG-img-right" />
+                <Container fluid>
+                    <Navbar.Brand>
+                        <Link to="/"><LogoContainer /></Link>
+                    </Navbar.Brand>
+                    <Navbar.Toggle aria-controls="navbarScroll" />
+                    <Navbar.Collapse id="navbarScroll">
+                        <Nav
+                            className="me-auto my-2 my-lg-0 main-nav"
+                            // style={{ maxHeight: '100px' }}
+                            navbarScroll
+                        >
+                            <Link onClick={reset} className='nav-item' to='/'>Home</Link>
+                            <Link onClick={reset} className='nav-item' to='/swap'>Swap</Link>
+                            <Link onClick={reset} className='nav-item' to='/mint'>Mint</Link>
+
+                            {myAddress!==undefined &&
+                            pages.map((item, index) =>
+                                <Link key={index}
+                                    onClick={reset}
+                                    className='nav-item'
+                                    to={item.path}>
+                                    {item.text}</Link>
+                            )
+                            }
+                            {isDeployer ? <Link onClick={reset} className='nav-item' to="/admin">Admin</Link> : null}
+                        </Nav>
+                        {
+                            myAddress
+                                ? <UserBar
+                                    showInfo={showInfo} myAddress={myAddress}
+                                    modalState={modalState} isWhite={isWhite}
+                                    nickname={nickname} changeNickname={changeNickname}
+                                    klayBalance={klayBalance} btkBalance={btkBalance}
+                                />
+                                : <WalletButton onClick={clickEnableKaikas}>지갑 연결하기</WalletButton>
+                                // <><Button className="mint-wal-connect-btn" variant="success" onClick={clickEnableKaikas}>지갑 연결하기</Button>{' '}</>
+                        }
+                    </Navbar.Collapse>
+                </Container>
+            </Navbar>
+        </>
     )
 }
 

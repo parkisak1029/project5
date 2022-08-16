@@ -1,0 +1,7 @@
+CREATE TABLE whitelist(  
+    `idx` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `publicKey` VARCHAR(255) DEFAULT "" NULL,
+    `date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+drop table whitelist;

@@ -1,144 +1,136 @@
 import React, { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import Klaytn from '../img/swap/klaytn.png';
 import Browny1 from '../img/swap/browny1.png';
 import Arrow from '../img/swap/arrowRight.png';
-import {brownyContract, contractAddr} from "configs";
-import {getBtk, sellBtk} from "api"
-
+import { addBTK, getBtk, sellBtk, useAlert } from "api"
+import AlertModal from 'components/AlertModal';
+import SwapHeader from 'components/swap/SwapHeader';
+import SwapBody from 'components/swap/SwapBody';
+import SwapFooter from 'components/swap/SwapFooter';
+import ImgComponent from 'components/ImgComponent';
 
 const Swap = () => {
-    const bool = {false: 'KLAY', true: 'BTK'}
+    const bool = { false: 'KLAY', true: 'BTK' }
     const dispatch = useDispatch();
 
     const [swap, setSwap] = useState(true);
-    const [exchange, setExchange] = useState('');
+    const [exchange, setExchange] = useState('7.22');
+
+    const customAlert = useAlert();
 
     const amountInput = useRef('');
 
     const swapChange = () => {
-        setSwap(!swap)
-        amountInput.current.value = ''
+        setSwap(!swap);
+        amountInput.current.value = '';
+    }
+
+    const resetChange = () => {
+        if(swap) setExchange('7.22');
+        else setExchange('0.14');
     }
 
     const checkValidation = () => {
-        let value = amountInput.current.value
-        // let testLen = value.length - bool[!swap].length - 1;
-        // value = value.slice(0,testLen);
-        // console.log(testLen)
-        // console.log(value.slice(0, testLen));
-        // value = value.slice(0, testLen);
-        let re = /[^0-9]/g;
+        let value = amountInput.current.value;
+        let re = /[^0-9.]/g;
         if (re.test(value)) {
-            alert('숫자를 입력해 주세요!');
+            customAlert.open('숫자를 입력해 주세요!');
             amountInput.current.value = '';
-            setExchange('');
+            resetChange();
         }
         else if (Number(value) > 10000) {
-            alert('최대 거래 수량 초과 \n ')
+            customAlert.open('최대 거래 수량 초과 \n ')
             amountInput.current.value = '';
-            setExchange('');
+            resetChange();
+        }
+        else if (value.startsWith('.')) {
+            customAlert.open('잘못된 입력입니다.');
+            resetChange();
         }
 
         else {
-            if (value != '') {
-                if (swap) setExchange(parseFloat(Number(value) * 10).toFixed(2) + ' ' + bool[swap])
-                else setExchange(parseFloat(Number(value) / 10).toFixed(2) + ' ' + bool[swap])
+            if (value !== '') {
+                if (swap) setExchange((value * 7.22).toFixed(2))
+                else setExchange((value / 7.22).toFixed(2))
             }
-            else setExchange('your exchange')
-            // amountInput.current.value = ;
+            else {
+                if(swap) setExchange('7.22');
+                else setExchange('0.14');
+            }
         }
-        
     }
 
-    const {myAddress} = useSelector(state =>state.nft);
-    
+    const { myAddress} = useSelector(state => state.nft);
+    const { klayBalance, btkBalance } = useSelector(state => state.main);
+
     const swapToken = async () => {
         let amount = amountInput.current.value
         let status;
-        if(Number(amount)){
-            if(swap){
-                const result = await getBtk(myAddress,amount)
+        if (swap) {
+            if (amount < klayBalance) {
+                const result = await getBtk(myAddress, amount)
                 status = result.status
             }
-            else{
+            else {
+                return customAlert.open('잔액 부족')
+            }
+        }
+        else {
+            if (amount < btkBalance) {
                 const result = await sellBtk(myAddress, amount)
                 status = result.status
             }
-            if(status){
-                alert('스왑완료');
-                dispatch({type: "WALLET_REFRESH"})
+            else {
+                return customAlert.open('잔액 부족')
             }
-            else alert("오류 발생")
+        }
+        if (status) {
+            customAlert.open('스왑완료');
+            amountInput.current.value = '';
+            setExchange('exchange');
+            dispatch({ type: "WALLET_REFRESH" })
         }
         else {
-            alert("숫자를 입력해주세요")
-            amountInput.current.value = "";
+            if (myAddress === undefined) customAlert.open("지갑을 먼저 연결해주세요!")
+            else customAlert.open("오류 발생")
         }
     }
+
     return (
+        <>
+        <ImgComponent />
         <div className='swap-box'>
+            <AlertModal {...customAlert} />
             <div className='select-box'>
-                <p className='swap-header'>SWAP</p>
-                <div className='swap-select'>
-                    <div className='swap-body'>
-                        {<img 
-                        className={!swap ? 'browny-icon' : 'klay-icon'} 
-                        src={!swap ? Browny1 : Klaytn}
-                        />}
-                        {bool[!swap]}
-                    </div>
-                    <FontAwesomeIcon 
-                    icon={faArrowRightArrowLeft} 
-                    className='swap-token-icon'
-                    onClick={swapChange}
-                    />
-                    <div className='swap-body'>
-                        {<img 
-                        className={swap ? 'browny-icon' : 'klay-icon'} 
-                        src={!swap ? Klaytn : Browny1}
-                        />}{bool[swap]}
-                    </div>
-                </div>
-                <div className='swap-ratio-outer'>
-                <div className='swap-ratio-inner'>
-                    <div className='swap-ratio'>1 KLAY = 10 BTK</div>
-                    <div className='swap-ratio'>1 BTK = 0.1 KLAY</div>
-                </div>
-                </div>
-                <div className='swap-amount-input-box'>
-                    <div className='swap-amount-inner'>
-                        <input 
-                        className='swap-amount-input'
-                        placeholder='input amount'
-                        onChange={checkValidation}
-                        ref={amountInput} /> 
-                        <img className='swap-arrow' src={Arrow} />
-                        <input 
-                        disabled
-                        className='swap-amount-input'
-                        placeholder='your exchange'
-                        value={amountInput.current.value != '' ?  exchange : 'your exchange'}
-                        /> 
-                        {/* <div className='swap-exchange'>
-                            4{bool[swap]}
-                        </div> */}
-                    </div>
-                </div>
-                <div className='swap-text-box'>
-                    <p className='swap-text'>최대 10000(일만)개 거래 가능합니다</p>
-                </div>
-                <div className='swap-submit'>
-                    <button 
-                    className='swap-button'
-                    onClick={swapToken}
-                    type='button'>Submit</button>
-                </div>
+                <SwapHeader 
+                    addBTK={addBTK} 
+                    Browny1={Browny1}
+                    myAddress={myAddress}
+                    klayBalance={klayBalance}
+                    btkBalance={btkBalance}
+                />
+
+                <SwapBody 
+                    swap={swap}
+                    Browny1={Browny1}
+                    Klaytn={Klaytn}
+                    Arrow={Arrow}
+                    bool={bool}
+                    swapChange={swapChange}
+                    checkValidation={checkValidation}
+                    amountInput={amountInput}
+                    exchange={exchange}
+                    myAddress={myAddress}
+                    klayBalance={klayBalance}
+                    btkBalance={btkBalance}
+                />
+                
+                <SwapFooter swapToken={swapToken} />
             </div>
         </div>
-  )
+        </>
+    )
 }
 
 export default Swap
